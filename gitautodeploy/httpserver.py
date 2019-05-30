@@ -103,7 +103,6 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
 
             # Extract request headers and make all keys to lowercase (makes them easier to compare)
             request_headers = dict(self.headers)
-            request_headers = dict((k.lower(), v) for k, v in request_headers.items())
 
             action = WebhookAction(self.client_address, request_headers, request_body)
             self._event_store.register_action(action)
