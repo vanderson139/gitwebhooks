@@ -307,8 +307,8 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
         def validate_web_ui_whitelist(self):
             """Verify that the client address is whitelisted"""
 
-            # Allow all if whitelist is empty
-            if len(self._config['web-ui-whitelist']) == 0:
+            # Allow all if whitelist is empty or "*"
+            if len(self._config['web-ui-whitelist']) == 0 or "*" in self._config['web-ui-whitelist']:
                 return True
 
             # Verify that client IP is whitelisted

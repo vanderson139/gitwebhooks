@@ -37,9 +37,14 @@ def get_config_defaults():
     config['https-port'] = 8002
 
     # Web socket server options (used by web UI for real time updates)
+    config['ws-enabled'] = False  # Disabled by default until authentication is in place
+    config['ws-host'] = '0.0.0.0'
+    config['ws-port'] = 8003
+
+    # Web socket server options (used by web UI for real time updates)
     config['wss-enabled'] = False  # Disabled by default until authentication is in place
     config['wss-host'] = '0.0.0.0'
-    config['wss-port'] = 8003
+    config['wss-port'] = 8004
 
     # TLS/SSL cert (necessary for HTTPS and web socket server to work)
     config['ssl-key'] = None  # If specified, holds the private key

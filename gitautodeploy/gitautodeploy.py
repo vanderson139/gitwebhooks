@@ -421,10 +421,59 @@ class GitAutoDeploy(object):
         self._event_store.register_action(event)
         event.log_info('HTTPS server did quit')
 
+    def serve_ws(self):
+        """Start a web socket server, used by the web UI to get notifications about updates."""
+        import os
+        from .events import SystemEvent
+        from autobahn.websocket import WebSocketServerProtocol, WebSocketServerFactory
+        from twisted.internet import reactor
+        from twisted.internet.error import BindError
+
+        # Start a web socket server if the web UI is enabled
+        if not self._config['web-ui-enabled']:
+            return
+
+        if not self._config['ws-enabled']:
+            return
+
+        try:
+            # Create a WebSocketClientHandler instance
+            WebSocketClientHandler = WebSocketClientHandlerFactory(self._config, self._ws_clients, self._event_store, self._server_status)
+
+            uri = u"ws://%s:%s" % (self._config['ws-host'], self._config['ws-port'])
+            factory = WebSocketServerFactory(uri)
+            factory.protocol = WebSocketClientHandler
+            # factory.setProtocolOptions(maxConnections=2)
+
+            self._ws_server_port = reactor.listenTCP(self._config['ws-port'], factory)
+
+            self._server_status['wss-uri'] = "ws://%s:%s" % (self._config['ws-host'], self._config['ws-port'])
+
+            self._startup_event.log_info("Listening for connections on %s" % self._server_status['wss-uri'])
+            self._startup_event.ws_address = self._config['ws-host']
+            self._startup_event.ws_port = self._config['ws-port']
+            self._startup_event.set_ws_started(True)
+
+            # Serve forever (until reactor.stop())
+            reactor.run(installSignalHandlers=False)
+
+        except BindError as e:
+            self._startup_event.log_critical("Unable to start web socket server: %s" % e)
+
+        except ImportError:
+            self._startup_event.log_error("Unable to start web socket server due to missing dependency.")
+
+        event = SystemEvent()
+        self._event_store.register_action(event)
+        event.log_info('WS server did quit')
+
     def serve_wss(self):
         """Start a web socket server over SSL, used by the web UI to get notifications about updates."""
         import os
         from .events import SystemEvent
+        from autobahn.websocket import WebSocketServerProtocol, WebSocketServerFactory
+        from twisted.internet import reactor
+        from twisted.internet.error import BindError
 
         # Start a web socket server if the web UI is enabled
         if not self._config['web-ui-enabled']:
@@ -437,12 +486,9 @@ class GitAutoDeploy(object):
             self._startup_event.log_critical("Unable to activate SSL: File does not exist: %s" % self._config['ssl-cert'])
             return
 
-        try:
-            import os
-            from autobahn.websocket import WebSocketServerProtocol, WebSocketServerFactory
-            from twisted.internet import reactor, ssl
-            from twisted.internet.error import BindError
+        from twisted.internet import ssl
 
+        try:
             # Create a WebSocketClientHandler instance
             WebSocketClientHandler = WebSocketClientHandlerFactory(self._config, self._ws_clients, self._event_store, self._server_status)
 
@@ -457,9 +503,7 @@ class GitAutoDeploy(object):
             else:
                 contextFactory = ssl.DefaultOpenSSLContextFactory(privateKeyFileName=self._config['ssl-cert'], certificateFileName=self._config['ssl-cert'])
 
-
             self._ws_server_port = reactor.listenSSL(self._config['wss-port'], factory, contextFactory)
-            # self._ws_server_port = reactor.listenTCP(self._config['wss-port'], factory)
 
             self._server_status['wss-uri'] = "wss://%s:%s" % (self._config['wss-host'], self._config['wss-port'])
 
@@ -516,6 +560,9 @@ class GitAutoDeploy(object):
 
             # HTTPS server
             threading.Thread(target=self.serve_https),
+
+            # Web socket server
+            threading.Thread(target=self.serve_ws),
 
             # Web socket SSL server
             threading.Thread(target=self.serve_wss)

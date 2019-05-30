@@ -65,6 +65,7 @@ config.json
 .DS_Store
 ._.DS_Store
 .fuse*
+.vscode
 
 # Ignore
 deb_dist
