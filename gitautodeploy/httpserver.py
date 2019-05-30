@@ -101,9 +101,16 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             content_length = int(self.headers.get('content-length'))
             request_body = self.rfile.read(content_length).decode('utf-8')
 
+            def lower_keys(x):
+                if isinstance(x, list):
+                    return [lower_keys(v) for v in x]
+                elif isinstance(x, dict):
+                    return dict((k.lower(), lower_keys(v)) for k, v in x.iteritems())
+                else:
+                    return x
+
             # Extract request headers and make all keys to lowercase (makes them easier to compare)
-            request_headers = dict(self.headers)
-            request_headers = dict((k.lower(), v) for k, v in request_headers.items())
+            request_headers = lower_keys(dict(self.headers))
 
             action = WebhookAction(self.client_address, request_headers, request_body)
             self._event_store.register_action(action)
