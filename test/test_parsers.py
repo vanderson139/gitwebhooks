@@ -22,6 +22,7 @@ class WebhookTestCase(WebhookTestCaseBase):
         config = {
             'http-port': 0,
             'https-enabled': False,
+            'ws-enabled': False,
             'wss-enabled': False,
             'web-ui-require-https': False,
             'intercept-stdout': False,
