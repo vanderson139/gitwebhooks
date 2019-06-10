@@ -15,6 +15,8 @@
         padding: 0;
     }
 
+    overflow: hidden;
+
     .inner {
         position: relative;
         background-color: white;
@@ -165,12 +167,16 @@
         border-radius: $timeline-icon-radius * 4;
         background-color: #46cbde;
         border: $timeline-icon-border solid $body-background;
-        left: 50%;
+        left: 92%;
         right: auto;
         margin-left: -1 * ($timeline-icon-radius + $line-thickness);
         display: none;
+
         @media screen and (min-width : $mobile-min-width) {
             display: block;
+        }
+        @media screen and (min-width : $tablet-min-width) {
+            left: 50%;
         }
     }
 
@@ -252,163 +258,30 @@
         font-size: .7rem;
         line-height: 1rem;
         color: #999;
-    }
 
-    &.left .datetime {
         left: auto;
         right: calc(-1 * #{$relative-timeline-spacing} * 2 - #{$datetime-width});
         text-align: left;
-    }
-
-    &.right .datetime {
-        left: calc(-1 * #{$relative-timeline-spacing} * 2 - #{$datetime-width});
-        right: auto;
-        text-align: right;
-    }
-
-
-    /*
-    &.left .datetime {
-        //left: auto;
-        //right: -7rem;
-        top: -2.25rem;
-        right: 0;
-
-        span {
-            text-align: right;
-        }
-    }
-
-    &.right .datetime {
-        left: -7rem;
-        right: auto;
-
-        span {
-            text-align: right;
-        }
-    }
-    */
-/*
-
-    p.datetime .date,
-    p.datetime .time {
-        display: block;
-        font-size: .7rem;
-    }
-
-    p.datetime .date {
         display: none;
     }
 
-    p.project {
-        font-size: .9rem;
-        margin: .25rem 0;
+    @media screen and (min-width : $mobile-min-width) {
+        p.datetime {
+            display: block;
+        }
     }
-
-    p.project:before {
-        font-size: .9rem;
-        margin: .25rem 0;
+    @media screen and (max-width : $tablet-min-width) {
+        p.datetime {
+            right: calc(-0.27 * #{$relative-timeline-spacing} * 2 - #{$datetime-width});
+        }
     }
-
-    p.project button {
-        border: none;
-        background: none;
-        cursor: pointer;
-        padding: 0;
-        margin: 0 .125rem;
+    @media screen and (min-width : $tablet-min-width) {
+        &.right .datetime {
+            left: calc(-1 * #{$relative-timeline-spacing} * 2 - #{$datetime-width});
+            right: auto;
+            text-align: right;
+        }
     }
-
-    p.duration {
-        font-size: .9rem;
-        margin: .25rem 0;
-    }
-
-  //  p:last-child {
-//        margin-bottom: .5rem;
-    //}
-
-
-    p.type {
-        position: relative;
-        font-size: .8rem;
-        margin: .25rem 0;
-        background-color: #f4f4f4;
-        background-color: #D7DBE4;
-        display: inline-block;
-        border-radius: 3px;
-        padding: .125rem .5rem .125rem 3.2rem;
-    }
-
-    p.type:before {
-        content: "Type";
-        background-color: #999;
-        color: white;
-        border-radius: 3px 0 0 3px;
-        padding: .125rem .5rem;
-        text-transform: uppercase;
-        font-size: .7rem;
-        display: inline-block;
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-    }
-
-
-    p.address {
-        position: relative;
-        font-size: .8rem;
-        margin: .25rem 0;
-        background-color: #D7DBE4;
-        display: inline-block;
-        border-radius: 3px;
-        padding: .125rem .5rem .125rem 4.6rem;
-        margin-right: .5rem;
-    }
-
-    p.address:before {
-        content: "Address";
-        background-color: #797;
-        color: white;
-        border-radius: 3px 0 0 3px;
-        padding: .125rem .5rem;
-        text-transform: uppercase;
-        font-size: .7rem;
-        display: inline-block;
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-    }
-
-    p.port {
-        position: relative;
-        font-size: .8rem;
-        margin: .25rem 0;
-        background-color: #D7DBE4;
-        display: inline-block;
-        border-radius: 3px;
-        padding: .125rem .5rem .125rem 3.3rem;
-    }
-
-    p.port:before {
-        content: "Port";
-        background-color: #797;
-        color: white;
-        border-radius: 3px 0 0 3px;
-        padding: .125rem .5rem;
-        text-transform: uppercase;
-        font-size: .7rem;
-        display: inline-block;
-        position: absolute;
-        left: 0;
-        top: 0;
-        bottom: 0;
-    }*/
-
-
-
-
 
     $spinner-size: 30px;
     $spinner-color: white;
