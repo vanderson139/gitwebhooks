@@ -2,6 +2,7 @@ class SystemEvent(object):
 
     def __init__(self, name=None):
         import logging
+        from time import time
 
         self.logger = logging.getLogger()
         self.hub = None
@@ -10,6 +11,7 @@ class SystemEvent(object):
         self.id = None
         self.waiting = None
         self.success = None
+        self.timestamp = time()
 
     def __repr__(self):
         if self.id:
@@ -18,11 +20,11 @@ class SystemEvent(object):
             return "<SystemEvent>"
 
     def dict_repr(self):
-        from time import time
+
         return {
             "id": self.id,
             "type": type(self).__name__,
-            "timestamp": time(),
+            "timestamp": self.timestamp,
             "messages": self.messages,
             "waiting": self.waiting,
             "success": self.success
@@ -31,8 +33,8 @@ class SystemEvent(object):
     def register_hub(self, hub):
         self.hub = hub
 
-    def register_message(self, message, level="INFO"):
-        self.messages.append(message)
+    def register_message(self, message, status="INFO"):
+        self.messages.append({'message': message, 'status': status.lower()})
         self.hub.notify_observers(type="event-updated", event=self.dict_repr())
 
     def set_id(self, id):
@@ -52,7 +54,6 @@ class SystemEvent(object):
 
     def log_debug(self, message):
         self.logger.debug(message)
-        self.register_message(message, "DEBUG")
 
     def log_info(self, message):
         self.logger.info(message)
@@ -69,9 +70,6 @@ class SystemEvent(object):
     def log_critical(self, message):
         self.logger.critical(message)
         self.register_message(message, "CRITICAL")
-
-    #def update(self):
-    #    self.hub.notify_observers(type="event-updated", event=self.dict_repr())
 
 
 class WebhookAction(SystemEvent):

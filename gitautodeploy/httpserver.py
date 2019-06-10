@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import absolute_import
 from .events import WebhookAction
 from .parsers import get_service_handler
@@ -68,13 +70,15 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
                 self.handle_status_api()
                 return
 
+            if self.path == "/api/dynamic-envs":
+                self.handle_dynamic_envs()
+                return
+
             # Serve static file
             return SimpleHTTPRequestHandler.do_GET(self)
 
         def handle_status_api(self):
             import json
-            from os import urandom
-            from base64 import b64encode
 
             data = {
                 'events': self._event_store.dict_repr(),
@@ -88,12 +92,47 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             self.end_headers()
             self.wfile.write(json.dumps(data).encode('utf-8'))
 
+        def handle_dynamic_envs(self):
+            import json
+            import os
+
+            data = []
+            repositories = []
+
+            for repository in self._config['repositories']:
+
+                if repository['dynamic'] and 'review' in repository:
+                    repository_name = repository['url'].split('/')[-1].split('.git')[0]
+
+                    if repository_name not in repositories:
+
+                        dynamic_envs_path = os.path.expanduser(repository['review']['path'])
+                        envs = []
+
+                        if os.path.isdir(dynamic_envs_path):
+                            for name in os.listdir(dynamic_envs_path):
+                                if os.path.isdir(os.path.join(dynamic_envs_path, name)):
+                                    envs.append(name)
+
+                        data.append({
+                            'repository': repository_name,
+                            'envs': envs
+                        })
+
+                        repositories.append(repository_name)
+
+            self.send_response(200, 'OK')
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(data).encode('utf-8'))
+
         def do_POST(self):
             """Invoked on incoming POST requests"""
             from threading import Timer
             import logging
             import json
             import threading
+            import time
             from urlparse import parse_qs
 
             logger = logging.getLogger()
@@ -109,7 +148,7 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             self._event_store.register_action(action)
             action.set_waiting(True)
 
-            action.log_info('Incoming request from %s:%s' % (self.client_address[0], self.client_address[1]))
+            action.log_info(u"Requisição de %s:%s" % (self.client_address[0], self.client_address[1]))
 
             # Payloads from GitHub can be delivered as form data. Test the request for this pattern and extract json payload
             if request_headers['content-type'] == 'application/x-www-form-urlencoded':
@@ -134,26 +173,31 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
                 if not ServiceRequestHandler:
                     self.send_error(400, 'Unrecognized service')
                     test_case['expected']['status'] = 400
-                    action.log_error("Unable to find appropriate handler for request. The source service is not supported")
+                    action.log_error("O serviço de origem não é suportado")
                     action.set_waiting(False)
                     action.set_success(False)
                     return
 
                 service_handler = ServiceRequestHandler(self._config)
 
-                action.log_info("Handling the request with %s" % ServiceRequestHandler.__name__)
+                action.log_debug(u"Manipulando a requisição com %s" % ServiceRequestHandler.__name__)
 
                 # Could be GitHubParser, GitLabParser or other
                 projects = service_handler.get_matching_projects(request_headers, request_body, action)
 
-                action.log_info("%s candidates matches the request" % len(projects))
+                # Charm
+                time.sleep(0.5)
+
+                action.log_info(u"%s candidat%s correspond%s a requisição" %
+                                (len(projects), 'o' if len(projects) is 1 else 'os',
+                                 'e' if len(projects) is 1 else 'em'))
 
                 # request_filter = WebhookRequestFilter()
 
                 if len(projects) == 0:
                     self.send_error(400, 'Bad request')
                     test_case['expected']['status'] = 400
-                    action.log_error("No matching projects")
+                    action.log_error(u"Nenhum projeto correspondente")
                     action.set_waiting(False)
                     action.set_success(False)
                     return
@@ -167,12 +211,22 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
                 # Only keep projects that matches
                 projects = matching_projects
 
-                action.log_info("%s candidates matches after applying filters" % len(projects))
+                # Charm
+                time.sleep(0.5)
+
+                log_message = u"%s candidat%s correspond%s após filtros" %\
+                              (len(projects), 'o' if len(projects) is 1 else 'os',
+                               'e' if len(projects) is 1 else 'em')
+
+                if len(projects) == 0:
+                    action.log_warning(log_message)
+                else:
+                    action.log_info(log_message)
 
                 if not service_handler.validate_request(request_headers, request_body, projects, action):
                     self.send_error(400, 'Bad request')
                     test_case['expected']['status'] = 400
-                    action.log_warning("Request was rejected due to a secret token mismatch")
+                    action.log_error(u"A solicitação foi rejeitada, o token de segurança é incompatível")
                     action.set_waiting(False)
                     action.set_success(False)
                     return
@@ -188,7 +242,11 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
                     action.set_success(False)
                     return
 
-                action.log_info("Proceeding with %s candidates" % len(projects))
+                # Charm
+                time.sleep(0.5)
+
+                action.log_info(u"Prosseguindo com %s deplo%s" %
+                                (len(projects), 'y' if len(projects) is 1 else 'ys'))
                 action.set_waiting(False)
                 action.set_success(True)
 
@@ -208,7 +266,7 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
 
             except ValueError as e:
                 self.send_error(400, 'Unprocessable request')
-                action.log_warning('Unable to process incoming request from %s:%s' % (self.client_address[0], self.client_address[1]))
+                action.log_error(u"Não foi possível processar a requisição de %s:%s" % (self.client_address[0], self.client_address[1]))
                 test_case['expected']['status'] = 400
                 action.set_waiting(False)
                 action.set_success(False)
@@ -217,7 +275,7 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             except Exception as e:
                 self.send_error(500, 'Unable to process request')
                 test_case['expected']['status'] = 500
-                action.log_warning("Unable to process request")
+                action.log_error(u"Não foi possível processar a requisição")
                 action.set_waiting(False)
                 action.set_success(False)
 

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 if __name__ == '__main__':
     import sys
     print("Critical - GAD must be started as a python module, for example using python -m gitautodeploy")
@@ -83,6 +85,12 @@ class GitAutoDeploy(object):
             # Only clone repositories with a configured path
             if 'path' not in repo_config:
                 logger.debug("Repository %s will not be cloned (no path configured)" % repo_config['url'])
+                continue
+
+            # Only clone repositories not dynamic
+            if repo_config['dynamic'] is True:
+                logger.debug("Repository %s (action %s) will not be cloned" %
+                             (repo_config['url'], repo_config['dynamic_action']))
                 continue
 
             if os.path.isdir(repo_config['path']) and os.path.isdir(repo_config['path']+'/.git'):
@@ -275,15 +283,32 @@ class GitAutoDeploy(object):
         # Generate auth key to protect the web socket server
         self._server_status['auth-key'] = base64.b64encode(os.urandom(32))
 
+        def subdirectories(dir):
+            return [name for name in os.listdir(dir)
+                    if os.path.isdir(os.path.join(dir, name))]
+
         # Clear any existing lock files, with no regard to possible ongoing processes
+        clean_path = []
+
         for repo_config in self._config['repositories']:
 
             # Do we have a physical repository?
             if 'path' in repo_config:
-                Lock(os.path.join(repo_config['path'], 'status_running')).clear()
-                Lock(os.path.join(repo_config['path'], 'status_waiting')).clear()
+                if repo_config['dynamic'] is False:
+                    Lock(os.path.join(repo_config['path'], 'status_running')).clear()
+                    Lock(os.path.join(repo_config['path'], 'status_waiting')).clear()
+                else:
+                    if not os.path.isdir(repo_config['path']):
+                        continue
 
-        #if 'daemon-mode' not in self._config or not self._config['daemon-mode']:
+                    for path in subdirectories(os.path.expanduser(repo_config['path'])):
+                        if path not in clean_path:
+                            Lock(os.path.join(path, 'status_running')).clear()
+                            Lock(os.path.join(path, 'status_waiting')).clear()
+
+                            clean_path.append(path)
+
+        # if 'daemon-mode' not in self._config or not self._config['daemon-mode']:
         #    self._startup_event.log_info('Git Auto Deploy started')
 
     def serve_http(self, serve_forever=True):
@@ -316,7 +341,7 @@ class GitAutoDeploy(object):
             sa = self._http_server.socket.getsockname()
             self._http_port = sa[1]
             self._server_status['http-uri'] = "http://%s:%s" % (self._config['http-host'], sa[1])
-            self._startup_event.log_info("Listening for connections on %s" % self._server_status['http-uri'])
+            self._startup_event.log_info(u"Escutando conexões em %s" % self._server_status['http-uri'])
             self._startup_event.http_address = sa[0]
             self._startup_event.http_port = sa[1]
             self._startup_event.set_http_started(True)
@@ -391,7 +416,7 @@ class GitAutoDeploy(object):
             self._http_port = sa[1]
             self._server_status['https-uri'] = "https://%s:%s" % (self._config['https-host'], sa[1])
 
-            self._startup_event.log_info("Listening for connections on %s" % self._server_status['https-uri'])
+            self._startup_event.log_info(u"Escutando conexões em %s" % self._server_status['https-uri'])
             self._startup_event.http_address = sa[0]
             self._startup_event.http_port = sa[1]
             self._startup_event.set_http_started(True)
@@ -449,7 +474,7 @@ class GitAutoDeploy(object):
 
             self._server_status['wss-uri'] = "ws://%s:%s" % (self._config['ws-host'], self._config['ws-port'])
 
-            self._startup_event.log_info("Listening for connections on %s" % self._server_status['wss-uri'])
+            self._startup_event.log_info(u"Escutando conexões em %s" % self._server_status['wss-uri'])
             self._startup_event.ws_address = self._config['ws-host']
             self._startup_event.ws_port = self._config['ws-port']
             self._startup_event.set_ws_started(True)
@@ -507,7 +532,7 @@ class GitAutoDeploy(object):
 
             self._server_status['wss-uri'] = "wss://%s:%s" % (self._config['wss-host'], self._config['wss-port'])
 
-            self._startup_event.log_info("Listening for connections on %s" % self._server_status['wss-uri'])
+            self._startup_event.log_info(u"Escutando conexões em %s" % self._server_status['wss-uri'])
             self._startup_event.ws_address = self._config['wss-host']
             self._startup_event.ws_port = self._config['wss-port']
             self._startup_event.set_ws_started(True)
