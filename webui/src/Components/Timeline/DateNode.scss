@@ -3,6 +3,7 @@
 .DateNode {
     position: relative;
     height: 4rem;
+    overflow: hidden;
 
     .date {
         $width: 5.5rem;

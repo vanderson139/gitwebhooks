@@ -14,9 +14,9 @@ class Timeline extends Component {
     super(props);
 
     var host = window.location.protocol + '//' + window.location.host;
- 
+
     if (process.env.NODE_ENV === 'development') {
-      host = 'https://10.0.0.1:8002';
+      host = 'http://0.0.0.0:8001';
     }
 
     this.state = {
@@ -314,30 +314,8 @@ class Timeline extends Component {
     };
   }
 
-  /*
-  function sendText() {
-    if (isopen) {
-        socket.send("Hello, world!");
-        console.log("Text message sent.");               
-    } else {
-        console.log("Connection not opened.")
-    }
-  };
-  function sendBinary() {
-    if (isopen) {
-        var buf = new ArrayBuffer(32);
-        var arr = new Uint8Array(buf);
-        for (i = 0; i < arr.length; ++i) arr[i] = i;
-        socket.send(buf);
-        console.log("Binary message sent.");
-    } else {
-        console.log("Connection not opened.")
-    }
-  };
-  */
-
   getDate(timestamp) {
-      return moment.unix(timestamp).format("YYYY-MM-DD");
+      return moment.unix(timestamp).format("DD/MM/YYYY");
   }
 
   getTimelineObjects() {
@@ -376,7 +354,7 @@ class Timeline extends Component {
     if(!this.state.loaded) {
       return (
         <div className="Timeline">
-          <div className="status-message">Connecting to {this.state.host}..</div>
+          <div className="status-message">Conectando-se a {this.state.host}...</div>
         </div>
       );
     }
@@ -384,7 +362,7 @@ class Timeline extends Component {
     if(this.state.error) {
       return (
         <div className="Timeline">
-          <div className="status-message">Unable to connect to {this.state.host}</div>
+          <div className="status-message">Não foi possível conectar-se a {this.state.host}</div>
         </div>
       );
     }

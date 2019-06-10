@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
+
 import collections
-from ..wrappers import GitWrapper
 from ..lock import Lock
 from ..wrappers import GitWrapper
 from ..events import DeployEvent
@@ -33,7 +34,15 @@ class Project(collections.MutableMapping):
         return key
 
     def get_name(self):
-        return self['url'].split('/')[-1].split('.git')[0]
+
+        repository_name = self['url'].split('/')[-1].split('.git')[0]
+
+        if 'path_name' in self:
+            path_name = (self['path_name'][:16] + '...') if len(self['path_name']) > 16  else self['path_name']
+
+            return u"%s - %s" % (path_name, repository_name)
+
+        return repository_name
 
     def passes_payload_filter(self, payload, action):
 
@@ -53,7 +62,7 @@ class Project(collections.MutableMapping):
 
                     # If the path is not valid the filter does not match
                     if not node_key in node_value:
-                        action.log_info("Filter '%s' does not match since the path is invalid" % (filter_key))
+                        action.log_debug("Filter '%s' does not match since the path is invalid" % (filter_key))
 
                         # Filter does not match, do not process this repo config
                         return False
@@ -62,6 +71,11 @@ class Project(collections.MutableMapping):
 
                 if filter_value == node_value:
                     continue
+
+                # Negation condition
+                if filter_value.startswith('~'):
+                    if filter_value[1:] != node_value:
+                        continue
 
                 # If the filter value is set to True. the filter
                 # will pass regardless of the actual value
@@ -89,6 +103,11 @@ class Project(collections.MutableMapping):
             if self['header-filter'][key] is True:
                 continue
 
+            # Negation condition
+            if self['header-filter'][key].startswith('~'):
+                if self['header-filter'][key][1:] != request_headers[key.lower()]:
+                    continue
+
             # Verify that the request has the required header value
             if self['header-filter'][key] != request_headers[key.lower()]:
                 return False
@@ -99,8 +118,6 @@ class Project(collections.MutableMapping):
     def apply_filters(self, request_headers, request_body, action):
         """Verify that the suggested repositories has matching settings and
         issue git pull and/or deploy commands."""
-        import os
-        import time
         import json
 
         payload = json.loads(request_body)
@@ -124,37 +141,45 @@ class Project(collections.MutableMapping):
         issue git pull and/or deploy commands."""
         import os
         import time
-        import json
 
         event = DeployEvent(self)
         event_store.register_action(event)
         event.set_waiting(True)
-        event.log_info("Running deploy commands")
+        event.log_info(u"Iniciando processamento")
 
-        # In case there is no path configured for the repository, no pull will
-        # be made.
+        # In case there is no path configured for the repository, no pull will be made.
         if 'path' not in self:
-            res = GitWrapper.deploy(self)
-            event.log_info("%s" % res)
+            GitWrapper.deploy(self, event)
             event.set_waiting(False)
             event.set_success(True)
             return
 
-        # If the path does not exist, a warning will be raised and no pull or
-        # deploy will be made.
+        # Dynamic env create
+        if self['dynamic'] is True:
+            if self['dynamic_action'] == 'create':
+                GitWrapper.copy(self, event)
+
+        # If the path does not exist, a warning will be raised
         if not os.path.isdir(self['path']):
-            event.log_error("The repository '%s' does not exist locally. Make sure it was pulled properly without errors by reviewing the log." % self['path'])
+            event.log_error(u"O diretório \"%s\" não existe" % self['path'])
             event.set_waiting(False)
             event.set_success(False)
             return
 
-        # If the path is not writable, a warning will be raised and no pull or
-        # deploy will be made.
+        # If the path is not writable, a warning will be raised
         if not os.access(self['path'], os.W_OK):
-            event.log_error("The path '%s' is not writable. Make sure that GAD has write access to that path." % self['path'])
+            event.log_error(u"O diretório \"%s\" não é gravável" % self['path'])
             event.set_waiting(False)
             event.set_success(False)
             return
+
+        # Dynamic env delete
+        if self['dynamic'] is True:
+            if self['dynamic_action'] == 'delete':
+                GitWrapper.destroy(self, event)
+                event.set_waiting(False)
+                event.set_success(True)
+                return
 
         running_lock = Lock(os.path.join(self['path'], 'status_running'))
         waiting_lock = Lock(os.path.join(self['path'], 'status_waiting'))
@@ -165,7 +190,7 @@ class Project(collections.MutableMapping):
 
                 # If we're unable, try once to obtain the status_waiting lock
                 if not waiting_lock.has_lock() and not waiting_lock.obtain():
-                    event.log_error("Unable to obtain the status_running lock nor the status_waiting lock. Another process is already waiting, so we'll ignore the request.")
+                    event.log_warning(u"Outro processo já está aguardando")
 
                     # If we're unable to obtain the waiting lock, ignore the request
                     break
@@ -174,25 +199,27 @@ class Project(collections.MutableMapping):
                 time.sleep(5)
 
             n = 4
-            res = None
             while n > 0:
 
                 # Attempt to pull up a maximum of 4 times
-                res = GitWrapper.pull(self)
+                res = GitWrapper.pull(self, event)
 
                 # Return code indicating success?
-                if res == 0:
+                if res:
                     break
 
                 n -= 1
 
             if 0 < n:
-                res = GitWrapper.deploy(self)
+                GitWrapper.deploy(self, event)
+            else:
+                raise Exception
 
-        #except Exception as e:
-        #    logger.error('Error during \'pull\' or \'deploy\' operation on path: %s' % self['path'])
-        #    logger.error(e)
-        #    raise e
+        except Exception:
+            event.log_info(u"Processamento abortado")
+            event.set_waiting(False)
+            event.set_success(False)
+            return
 
         finally:
 
@@ -204,7 +231,7 @@ class Project(collections.MutableMapping):
             if waiting_lock.has_lock():
                 waiting_lock.release()
 
-        event.log_info("Deploy commands were executed")
+        event.log_info(u"Processamento finalizado")
         event.set_waiting(False)
         event.set_success(True)
 

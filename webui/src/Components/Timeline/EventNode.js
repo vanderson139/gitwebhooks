@@ -33,6 +33,9 @@ class EventNode extends Component {
           <svg className="vertical-arrow" viewBox="0 0 10 30">
               <path d="M0,0 c0,5,0,5,5,10 c6,6,6,4,0,10 c-5,5,-5,5,-5,10" />
           </svg>
+          <p className="datetime">
+            {this.props.event.getTime()}
+          </p>
         </div>
       </div>
     );

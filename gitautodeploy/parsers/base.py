@@ -27,3 +27,6 @@ class WebhookRequestParserBase(object):
 
     def validate_request(self, request_headers, request_body, repo_configs, action):
         return True
+
+    def update_dynamic(self, repo_configs, request_body):
+        return True

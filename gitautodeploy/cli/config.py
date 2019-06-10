@@ -380,6 +380,17 @@ def init_config(config):
 
     for repo_config in config['repositories']:
 
+        # Is dynamic
+        repo_config['dynamic'] = False
+
+        # Setup base path for cp actions
+        if 'base' not in repo_config:
+            repo_config['base'] = None
+
+        # Setup base path for cp actions
+        if 'path_name' not in repo_config:
+            repo_config['path_name'] = None
+
         # Setup branch if missing
         if 'branch' not in repo_config:
             repo_config['branch'] = "master"
@@ -412,10 +423,6 @@ def init_config(config):
             if regexp:
                 repo_config['url_without_usernme'] = regexp.group(1) + regexp.group(3)
 
-        # Translate any ~ in the path into /home/<user>
-        if 'path' in repo_config:
-            repo_config['path'] = os.path.expanduser(repo_config['path'])
-
         # Support for legacy config format
         if 'filters' in repo_config:
             repo_config['payload-filter'] = repo_config['filters']
@@ -443,8 +450,47 @@ def init_config(config):
 
                 filter['pull_request'] = True
 
-        project = Project(repo_config)
-        deserialized.append(project)
+        # Translate any ~ in the path into /home/<user>
+        if 'path' in repo_config:
+            if isinstance(repo_config['path'], dict):
+                for path_name, path in repo_config['path'].items():
+                    repo_config['path'] = os.path.expanduser(path)
+                    repo_config['path_name'] = path_name
+
+                    project = Project(repo_config)
+                    deserialized.append(project)
+            else:
+                repo_config['path'] = os.path.expanduser(repo_config['path'])
+                project = Project(repo_config)
+                deserialized.append(project)
+
+        if 'review' in repo_config:
+            repo_config['dynamic'] = True
+
+            repo_config['branch'] = None
+            repo_config['path'] = None
+            repo_config['path_name'] = None
+
+            for review_key in repo_config['review']:
+                if review_key == 'actions':
+                    continue
+
+                if review_key == 'base':
+                    repo_config['base'] = os.path.expanduser(repo_config['review']['base'])
+                    continue
+
+                if review_key == 'path':
+                    repo_config['review_path'] = repo_config['review']['path']
+
+                repo_config[review_key] = repo_config['review'][review_key]
+
+            for action in ['create', 'delete', 'update']:
+                if action in repo_config['review']['actions']:
+                    repo_config.update(repo_config['review']['actions'][action])
+                    repo_config['dynamic_action'] = action
+
+                project = Project(repo_config)
+                deserialized.append(project)
 
     config['repositories'] = deserialized
 

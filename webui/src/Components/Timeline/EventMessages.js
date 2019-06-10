@@ -12,9 +12,13 @@ class EventMessages extends Component {
     
     var elements = [];
 
-    for(var i = messages.length - 1; i >= 0; i--) {
-      elements.push(<p key={i}>{messages[i]}</p>);
-    }
+    messages.forEach(function(message, index) {
+      elements.push(
+        <p key={index}>
+          <span className={message.status}></span>
+          {message.message}
+        </p>);
+    });
 
     return elements;
   }

@@ -16,16 +16,15 @@ class Event {
   getColorClass() {
 
       if(this.event.type === "StartupEvent")
-        return "green";
+        return "purple";
 
       if(this.event.type === "WebhookAction")
         return "blue";
 
       if(this.event.type === "DeployEvent")
-        return "blue";
+        return "green";
 
-      return "blue";
-//      return "purple";
+      return "purple";
   }
 
   getTitle() {
@@ -47,15 +46,16 @@ class Event {
       if(this.event.type === "StartupEvent") {
 
         if(this.isWaiting())
-          return "Starting up.."
+          return "Inicializando...";
 
-        return "Listening for incoming connections";
+        return "Escutando novas conexões";
       }
 
       if(this.event.type === "WebhookAction") {
         if(this.event.messages.length)
-          return this.event.messages[this.event.messages.length - 1]
-        return "Incoming request from " + this.event['client-address'];
+          return this.event.messages[this.event.messages.length - 1].message;
+
+        return "Solicitação recebida de " + this.event['client-address'];
       }
 
       if(this.event.type === "DeployEvent")
@@ -65,7 +65,7 @@ class Event {
   }
 
   getDate() {
-      return moment.unix(this.event.timestamp).format("YYYY-MM-DD");
+      return moment.unix(this.event.timestamp).format("DD/MM/YYYY");
   }
 
   getTime() {
@@ -75,7 +75,7 @@ class Event {
   getIconName() {
 
     if(this.event.success === false)
-      return "alert"
+      return "alert";
 
     if(this.event.type === "StartupEvent")
       return "alert-circle";
