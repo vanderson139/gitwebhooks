@@ -5,7 +5,7 @@ class Navigation extends Component {
   render() {
     return (
       <div className="Navigation">
-        <p className="title">Git Webhook</p>
+        <p className="title">Git Webhooks</p>
       </div>
     );
   }
