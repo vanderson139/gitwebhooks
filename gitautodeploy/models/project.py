@@ -79,7 +79,7 @@ class Project(collections.MutableMapping):
 
                 # If the filter value is set to True. the filter
                 # will pass regardless of the actual value
-                if filter_value == True:
+                if filter_value == '*':
                     continue
 
                 action.log_debug("Filter '%s' does not match ('%s' != '%s')" % (filter_key, filter_value, (str(node_value)[:75] + '..') if len(str(node_value)) > 75 else str(node_value)))
