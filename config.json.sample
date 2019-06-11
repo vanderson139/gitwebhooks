@@ -79,18 +79,35 @@
         "actions": {
           "create": {
             "header-filter": {
-              "x-github-event": "create"
-            }
+              "x-github-event": "push"
+            },
+              {
+                "created": true,
+                "deleted": false
+              }
+            ]
           },
           "delete": {
             "header-filter": {
-              "x-github-event": "delete"
-            }
+              "x-github-event": "push"
+            },
+            "payload-filter": [
+              {
+                "created": false,
+                "deleted": true
+              }
+            ]
           },
           "update": {
             "header-filter": {
               "x-github-event": "push"
-            }
+            },
+            "payload-filter": [
+              {
+                "created": false,
+                "deleted": false
+              }
+            ]
           }
         }
       }
