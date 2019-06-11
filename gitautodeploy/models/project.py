@@ -73,7 +73,7 @@ class Project(collections.MutableMapping):
                     continue
 
                 # Negation condition
-                if filter_value.startswith('~'):
+                if isinstance(filter_value, basestring) and filter_value.startswith('~'):
                     if filter_value[1:] != node_value:
                         continue
 
