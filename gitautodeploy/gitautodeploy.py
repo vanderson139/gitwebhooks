@@ -274,7 +274,7 @@ class GitAutoDeploy(object):
             sys.stderr = LogInterface(logger.error)
 
         if 'daemon-mode' in self._config and self._config['daemon-mode']:
-            self._startup_event.log_info('Starting Git Auto Deploy in daemon mode')
+            self._startup_event.log_info(u"Iniciando no modo daemon")
             GitAutoDeploy.create_daemon()
 
         self._pid = os.getpid()

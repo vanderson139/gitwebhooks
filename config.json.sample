@@ -32,10 +32,10 @@
   //"ssl-cert": "cert.pem",  // Holds the public key or both the private and public keys
 
   // File to store a copy of the console output
-  "log-file": "~/gitautodeploy.log",
+  "log-file": "~/gitwebhooks.log",
 
   // File to store the process id (pid)
-  "pid-file": "~/.gitautodeploy.pid",
+  "pid-file": "~/.gitwebhooks.pid",
 
   // Record all log levels by default
   //"log-level": "INFO",
@@ -48,19 +48,19 @@
 
   "repositories": [
     {
-      "url": "git@github.com:MBSrepo/SistemaMBS-DB1.git",
-      "branch": "future-master",
+      "url": "git@github.com:lucasrigato/gitwebhooks.git",
+      "branch": "master",
       "remote": "origin",
       "path": {
-        "Produção": "~/gerenciamento/master",
-        "Staging": "~/gerenciamento/staging"
+        "Produção": "~/gitwebhooks/master",
+        "Staging": "~/gitwebhooks/staging"
       },
       "header-filter": {
         "x-github-event": "push"
       },
       "payload-filter": [
         {
-          "ref": "refs/heads/future-master"
+          "ref": "refs/heads/master"
         }
       ],
 
@@ -69,11 +69,11 @@
       },
 
       "review": {
-        "base": "~/gerenciamento/staging",
-        "path": "~/gerenciamento/review",
+        "base": "~/gitwebhooks/staging",
+        "path": "~/gitwebhooks/review",
         "payload-filter": [
           {
-            "ref": "~refs/heads/future-master"
+            "ref": "~refs/heads/master"
           }
         ],
         "actions": {
