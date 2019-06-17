@@ -81,6 +81,7 @@
             "header-filter": {
               "x-github-event": "push"
             },
+            "payload-filter": [
               {
                 "created": true,
                 "deleted": false
