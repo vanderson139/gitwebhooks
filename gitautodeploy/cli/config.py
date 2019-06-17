@@ -563,7 +563,7 @@ def deep_update_config(source, overrides):
         if isinstance(value, list):
             source[key].append(value)
         elif isinstance(value, collections.Mapping) and value:
-            returned = deep_update(source.get(key, {}), value)
+            returned = deep_update_config(source.get(key, {}), value)
             source[key] = returned
         else:
             source[key] = overrides[key]
