@@ -486,7 +486,7 @@ def init_config(config):
 
             for action in ['create', 'delete', 'update']:
                 if action in repo_config['review']['actions']:
-                    repo_config.update(repo_config['review']['actions'][action])
+                    deep_update_config(repo_config, repo_config['review']['actions'][action])
                     repo_config['dynamic_action'] = action
 
                 project = Project(repo_config)
@@ -552,3 +552,20 @@ def get_config_file_path(env_config, argv_config, search_target):
         config_file_path = find_config_file(target_directories)
 
     return config_file_path
+
+
+def deep_update_config(source, overrides):
+
+    import collections
+
+    for key, value in overrides.iteritems():
+
+        if isinstance(value, list):
+            source[key].append(value)
+        elif isinstance(value, collections.Mapping) and value:
+            returned = deep_update(source.get(key, {}), value)
+            source[key] = returned
+        else:
+            source[key] = overrides[key]
+
+    return source
