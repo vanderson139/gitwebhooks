@@ -470,6 +470,8 @@ def init_config(config):
             repo_config['branch'] = None
             repo_config['path'] = None
             repo_config['path_name'] = None
+            repo_config['payload-filter'] = []
+            repo_config['header-filter'] = {}
 
             for review_key in repo_config['review']:
                 if review_key == 'actions':
@@ -484,9 +486,14 @@ def init_config(config):
 
                 repo_config[review_key] = repo_config['review'][review_key]
 
+            payload_filter = repo_config['payload-filter']
+            header_filter = repo_config['header-filter']
+
             for action in ['create', 'delete', 'update']:
                 if action in repo_config['review']['actions']:
-                    deep_update_config(repo_config, repo_config['review']['actions'][action])
+                    repo_config.update(repo_config['review']['actions'][action])
+                    repo_config['payload-filter'].extend(payload_filter)
+                    repo_config['header-filter'].update(header_filter)
                     repo_config['dynamic_action'] = action
 
                 project = Project(repo_config)
@@ -552,20 +559,3 @@ def get_config_file_path(env_config, argv_config, search_target):
         config_file_path = find_config_file(target_directories)
 
     return config_file_path
-
-
-def deep_update_config(source, overrides):
-
-    import collections
-
-    for key, value in overrides.iteritems():
-
-        if isinstance(value, list):
-            source[key].append(value)
-        elif isinstance(value, collections.Mapping) and value:
-            returned = deep_update_config(source.get(key, {}), value)
-            source[key] = returned
-        else:
-            source[key] = overrides[key]
-
-    return source
