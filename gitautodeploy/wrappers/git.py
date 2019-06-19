@@ -140,9 +140,20 @@ class GitWrapper:
         # Use repository path as default cwd when executing deploy commands
         cwd = (repo_config['path'] if 'path' in repo_config else None)
 
+        # Parse deploy commands internal vars
+        def parse_command_vars(repo_config, command):
+            import os
+
+            replative_path = repo_config['path'][len(os.path.expanduser('~')) + 1:]
+
+            return command \
+                .replace('${RELATIVE_PATH}', replative_path) \
+                .replace('${PATH}', repo_config['path'])
+
         for cmd in repo_config['deploy_commands']:
             if isinstance(cmd, basestring):
-                res = ProcessWrapper().call([cmd], cwd=cwd, shell=True)
+                res = ProcessWrapper().call(
+                    [parse_command_vars(repo_config, cmd)], cwd=cwd, shell=True)
 
                 if res == 0:
                     event.log_info(u"Comando \"%s\" executado" % cmd)
@@ -150,7 +161,8 @@ class GitWrapper:
                     event.log_error(u"Comando \"%s\" falhou" % cmd)
             else:
                 for cmd_name, cmd_value in cmd.items():
-                    res = ProcessWrapper().call([cmd_value], cwd=cwd, shell=True)
+                    res = ProcessWrapper().call(
+                        [parse_command_vars(repo_config, cmd_value)], cwd=cwd, shell=True)
 
                     if res == 0:
                         event.log_info(u"%s" % cmd_name)
