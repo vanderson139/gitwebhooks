@@ -140,6 +140,13 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             content_length = int(self.headers.get('content-length'))
             request_body = self.rfile.read(content_length).decode('utf-8')
 
+            # Payload need be json
+            try:
+                json.loads(request_body)
+            except ValueError:
+                self.send_error(400, 'Bad request')
+                return
+
             # Extract request headers and make all keys to lowercase (makes them easier to compare)
             request_headers = dict(self.headers)
             request_headers = dict((k.lower(), v) for k, v in request_headers.items())
