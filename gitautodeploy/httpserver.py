@@ -140,6 +140,16 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
             content_length = int(self.headers.get('content-length'))
             request_body = self.rfile.read(content_length).decode('utf-8')
 
+            # Extract request headers and make all keys to lowercase (makes them easier to compare)
+            request_headers = dict(self.headers)
+            request_headers = dict((k.lower(), v) for k, v in request_headers.items())
+
+            # Payloads from GitHub can be delivered as form data. Test the request for this pattern and extract json payload
+            if request_headers['content-type'] == 'application/x-www-form-urlencoded':
+                res = parse_qs(request_body.decode('utf-8'))
+                if 'payload' in res and len(res['payload']) == 1:
+                    request_body = res['payload'][0]
+
             # Payload need be json
             try:
                 json.loads(request_body)
@@ -147,21 +157,11 @@ def WebhookRequestHandlerFactory(config, event_store, server_status, is_https=Fa
                 self.send_error(400, 'Bad request')
                 return
 
-            # Extract request headers and make all keys to lowercase (makes them easier to compare)
-            request_headers = dict(self.headers)
-            request_headers = dict((k.lower(), v) for k, v in request_headers.items())
-
             action = WebhookAction(self.client_address, request_headers, request_body)
             self._event_store.register_action(action)
             action.set_waiting(True)
 
             action.log_info(u"Requisição de %s:%s" % (self.client_address[0], self.client_address[1]))
-
-            # Payloads from GitHub can be delivered as form data. Test the request for this pattern and extract json payload
-            if request_headers['content-type'] == 'application/x-www-form-urlencoded':
-                res = parse_qs(request_body.decode('utf-8'))
-                if 'payload' in res and len(res['payload']) == 1:
-                    request_body = res['payload'][0]
 
             # Test case debug data
             test_case = {
