@@ -44,6 +44,9 @@ class Project(collections.MutableMapping):
 
         return repository_name
 
+    def get_commit(self):
+        return self['commit']
+
     def passes_payload_filter(self, payload, action):
 
         # At least one filter must match

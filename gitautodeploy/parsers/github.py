@@ -52,29 +52,47 @@ class GitHubRequestParser(WebhookRequestParserBase):
     def update_dynamic(self, repo_configs, request_body):
 
         for repo_config in repo_configs:
-            if repo_config['dynamic'] is False:
-                continue
 
             import os
-
-            # Update branch name
             import json
 
             data = json.loads(request_body)
-            head = 'refs/heads/'
 
-            if 'ref' in data:
-                if data['ref'].startswith(head):
-                    name = data['ref'][len(head):]
-                else:
-                    name = data['ref']
+            if repo_config['dynamic'] is True:
+                head = 'refs/heads/'
 
-                repo_config['branch'] = name
+                if 'ref' in data:
+                    if data['ref'].startswith(head):
+                        name = data['ref'][len(head):]
+                    else:
+                        name = data['ref']
 
-            branch_path = repo_config['branch'].replace('/', '-').replace('_', '-')
+                    repo_config['branch'] = name
 
-            # Update path
-            repo_config['path'] = os.path.expanduser("%s/%s" % (repo_config['review_path'], branch_path))
-            repo_config['path_name'] = repo_config['branch']
+                branch_path = repo_config['branch'].replace('/', '-').replace('_', '-')
+
+                # Update path
+                repo_config['path'] = os.path.expanduser("%s/%s" % (repo_config['review_path'], branch_path))
+                repo_config['path_name'] = repo_config['branch']
+
+            # Update commit
+            repo_config['commit'] = {}
+
+            if 'head_commit' in data and data['head_commit'] is not None:
+
+                if 'message' in data['head_commit']:
+                    repo_config['commit'].update({'message': data['head_commit']['message']})
+
+                if 'id' in data['head_commit']:
+                    repo_config['commit'].update({'id': data['head_commit']['id']})
+
+                if 'compare' in data:
+                    repo_config['commit'].update({'url': data['compare']})
+
+            if 'sender' in data:
+                repo_config['commit'].update({
+                    'user': data['sender']['login'],
+                    'user_avatar_url': data['sender']['avatar_url']
+                })
 
         return True

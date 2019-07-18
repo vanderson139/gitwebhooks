@@ -1,0 +1,43 @@
+@import '../../variables';
+
+.EventCommit {
+
+    display: flex;
+    font-family: 'Lato', sans-serif;
+    font-weight: 400;
+    font-size: .8rem;
+    margin-bottom: .7rem;
+
+    .avatar {
+        width: 2.1rem;
+        height: 2.1rem;
+        min-width: 2.1rem;
+        border-radius: 4px;
+        overflow: hidden;
+
+        img {
+            max-width: 100%;
+        }
+    }
+
+    .info {
+        flex-grow: 1;
+        padding-left: .4rem;
+
+        p {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .user, .commit {
+          display: inline-block;
+          width: 50%;
+        }
+        .commit {
+          text-align: right;
+        }
+        .message {
+          font-size: .7rem;
+        }
+    }
+}

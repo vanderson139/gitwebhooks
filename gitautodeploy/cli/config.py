@@ -383,6 +383,9 @@ def init_config(config):
         # Is dynamic
         repo_config['dynamic'] = False
 
+        # Head commit
+        repo_config['commit'] = {}
+
         # Setup base path for cp actions
         if 'base' not in repo_config:
             repo_config['base'] = None
