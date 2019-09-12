@@ -44,6 +44,9 @@ class Project(collections.MutableMapping):
 
         return repository_name
 
+    def get_commit(self):
+        return self['commit']
+
     def passes_payload_filter(self, payload, action):
 
         # At least one filter must match
@@ -73,13 +76,13 @@ class Project(collections.MutableMapping):
                     continue
 
                 # Negation condition
-                if filter_value.startswith('~'):
+                if isinstance(filter_value, basestring) and filter_value.startswith('~'):
                     if filter_value[1:] != node_value:
                         continue
 
                 # If the filter value is set to True. the filter
                 # will pass regardless of the actual value
-                if filter_value == True:
+                if filter_value == '*':
                     continue
 
                 action.log_debug("Filter '%s' does not match ('%s' != '%s')" % (filter_key, filter_value, (str(node_value)[:75] + '..') if len(str(node_value)) > 75 else str(node_value)))

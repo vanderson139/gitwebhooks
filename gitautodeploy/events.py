@@ -105,6 +105,7 @@ class DeployEvent(SystemEvent):
     def dict_repr(self):
         data = super(DeployEvent, self).dict_repr()
         data['name'] = self.project.get_name()
+        data['commit'] = self.project.get_commit()
         return data
 
 

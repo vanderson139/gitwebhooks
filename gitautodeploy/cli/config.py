@@ -383,6 +383,17 @@ def init_config(config):
         # Is dynamic
         repo_config['dynamic'] = False
 
+        # Head commit
+        repo_config['commit'] = {}
+
+        # Command path
+        if 'command_path' not in repo_config:
+            repo_config['command_path'] = None
+
+        # Recursive update
+        if 'recursive_update' not in repo_config:
+            repo_config['recursive_update'] = False
+
         # Setup base path for cp actions
         if 'base' not in repo_config:
             repo_config['base'] = None
@@ -421,7 +432,7 @@ def init_config(config):
         if 'url' in repo_config:
             regexp = re.search(r"^(https?://)([^@]+)@(.+)$", repo_config['url'])
             if regexp:
-                repo_config['url_without_usernme'] = regexp.group(1) + regexp.group(3)
+                repo_config['url_without_username'] = regexp.group(1) + regexp.group(3)
 
         # Support for legacy config format
         if 'filters' in repo_config:
@@ -470,6 +481,8 @@ def init_config(config):
             repo_config['branch'] = None
             repo_config['path'] = None
             repo_config['path_name'] = None
+            repo_config['payload-filter'] = []
+            repo_config['header-filter'] = {}
 
             for review_key in repo_config['review']:
                 if review_key == 'actions':
@@ -484,9 +497,14 @@ def init_config(config):
 
                 repo_config[review_key] = repo_config['review'][review_key]
 
+            payload_filter = repo_config['payload-filter']
+            header_filter = repo_config['header-filter']
+
             for action in ['create', 'delete', 'update']:
                 if action in repo_config['review']['actions']:
                     repo_config.update(repo_config['review']['actions'][action])
+                    repo_config['payload-filter'].extend(payload_filter)
+                    repo_config['header-filter'].update(header_filter)
                     repo_config['dynamic_action'] = action
 
                 project = Project(repo_config)

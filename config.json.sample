@@ -76,21 +76,33 @@
             "ref": "~refs/heads/master"
           }
         ],
+        "header-filter": {
+          "x-github-event": "push"
+        },
         "actions": {
           "create": {
-            "header-filter": {
-              "x-github-event": "create"
-            }
+            "payload-filter": [
+              {
+                "created": true,
+                "deleted": false
+              }
+            ]
           },
           "delete": {
-            "header-filter": {
-              "x-github-event": "delete"
-            }
+            "payload-filter": [
+              {
+                "created": false,
+                "deleted": true
+              }
+            ]
           },
           "update": {
-            "header-filter": {
-              "x-github-event": "push"
-            }
+            "payload-filter": [
+              {
+                "created": false,
+                "deleted": false
+              }
+            ]
           }
         }
       }

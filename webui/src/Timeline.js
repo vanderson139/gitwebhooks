@@ -6,6 +6,7 @@ import EventNode from './Components/Timeline/EventNode';
 import DateNode from './Components/Timeline/DateNode';
 import EndNode from './Components/Timeline/EndNode';
 import EventMessages from './Components/Timeline/EventMessages';
+import EventCommit from './Components/Timeline/EventCommit';
 import moment from 'moment';
 import WebSocketStatus from './Components/WebSocketStatus';
 
@@ -329,6 +330,7 @@ class Timeline extends Component {
         var event = events[i];
 
         rows.push(<EventNode event={event} key={i} alignment={i%2===0 ? 'left' : 'right'} >
+          <EventCommit event={event} />
           <EventMessages event={event} />
         </EventNode>);
 
