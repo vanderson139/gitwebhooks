@@ -386,6 +386,10 @@ def init_config(config):
         # Head commit
         repo_config['commit'] = {}
 
+        # Recursive update
+        if 'recursive_update' not in repo_config:
+            repo_config['recursive_update'] = False
+
         # Setup base path for cp actions
         if 'base' not in repo_config:
             repo_config['base'] = None
@@ -424,7 +428,7 @@ def init_config(config):
         if 'url' in repo_config:
             regexp = re.search(r"^(https?://)([^@]+)@(.+)$", repo_config['url'])
             if regexp:
-                repo_config['url_without_usernme'] = regexp.group(1) + regexp.group(3)
+                repo_config['url_without_username'] = regexp.group(1) + regexp.group(3)
 
         # Support for legacy config format
         if 'filters' in repo_config:

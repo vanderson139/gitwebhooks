@@ -24,7 +24,9 @@ class GitWrapper:
         commands.append('git remote set-url ' + repo_config['remote'] + " " + repo_config['url'])
         commands.append('git fetch ' + repo_config['remote'])
         commands.append('git checkout -f -B ' + repo_config['branch'] + ' -t ' + repo_config['remote'] + '/' + repo_config['branch'])
-        commands.append('git submodule update --init --recursive')
+
+        if repo_config['recursive_update']:
+            commands.append('git submodule update --init --recursive')
 
         # All commands need to success
         cmd_res = []
@@ -66,7 +68,9 @@ class GitWrapper:
 
         commands.append('git fetch ' + repo_config['remote'])
         commands.append('git reset --hard ' + repo_config['remote'] + "/" + repo_config['branch'])
-        commands.append('git submodule update --init --recursive')
+
+        if repo_config['recursive_update']:
+            commands.append('git submodule update --init --recursive')
 
         if "postpull" in repo_config:
             commands.append(repo_config['postpull'])
