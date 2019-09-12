@@ -75,10 +75,15 @@ class GitWrapper:
         if "postpull" in repo_config:
             commands.append(repo_config['postpull'])
 
+        if repo_config['command_path'] is not None:
+            cwd = GitWrapper.parse_vars(repo_config['command_path'])
+        else:
+            cwd = repo_config['path']
+
         # All commands need to success
         cmd_res = []
         for command in commands:
-            res = ProcessWrapper().call(command, cwd=repo_config['path'], shell=True, supressStderr=True)
+            res = ProcessWrapper().call(command, cwd=cwd, shell=True, supressStderr=True)
             cmd_res.append(res)
 
             if res != 0:
@@ -141,23 +146,16 @@ class GitWrapper:
 
         logger.info('Executing deploy commands')
 
-        # Use repository path as default cwd when executing deploy commands
-        cwd = (repo_config['path'] if 'path' in repo_config else None)
-
-        # Parse deploy commands internal vars
-        def parse_command_vars(repo_config, command):
-            import os
-
-            replative_path = repo_config['path'][len(os.path.expanduser('~')) + 1:]
-
-            return command \
-                .replace('${RELATIVE_PATH}', replative_path) \
-                .replace('${PATH}', repo_config['path'])
+        if repo_config['command_path'] is not None:
+            cwd = GitWrapper.parse_vars(repo_config['command_path'])
+        else:
+            # Use repository path as default cwd when executing deploy commands
+            cwd = (repo_config['path'] if 'path' in repo_config else None)
 
         for cmd in repo_config['deploy_commands']:
             if isinstance(cmd, basestring):
                 res = ProcessWrapper().call(
-                    [parse_command_vars(repo_config, cmd)], cwd=cwd, shell=True)
+                    [GitWrapper.parse_vars(repo_config, cmd)], cwd=cwd, shell=True)
 
                 if res == 0:
                     event.log_info(u"Comando \"%s\" executado" % cmd)
@@ -166,7 +164,7 @@ class GitWrapper:
             else:
                 for cmd_name, cmd_value in cmd.items():
                     res = ProcessWrapper().call(
-                        [parse_command_vars(repo_config, cmd_value)], cwd=cwd, shell=True)
+                        [GitWrapper.parse_vars(repo_config, cmd_value)], cwd=cwd, shell=True)
 
                     if res == 0:
                         event.log_info(u"%s" % cmd_name)
@@ -256,3 +254,13 @@ class GitWrapper:
             event.log_info(u"Ambiente \"%s\" destruído" % repo_config['branch'])
         else:
             event.log_error(u"Não foi possível destruir o ambiente \"%s\"" % repo_config['branch'])
+
+    @staticmethod
+    def parse_vars(repo_config, command):
+        import os
+
+        replative_path = repo_config['path'][len(os.path.expanduser('~')) + 1:]
+
+        return command \
+            .replace('${RELATIVE_PATH}', replative_path) \
+            .replace('${PATH}', repo_config['path'])

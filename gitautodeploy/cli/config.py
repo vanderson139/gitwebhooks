@@ -386,6 +386,10 @@ def init_config(config):
         # Head commit
         repo_config['commit'] = {}
 
+        # Command path
+        if 'command_path' not in repo_config:
+            repo_config['command_path'] = None
+
         # Recursive update
         if 'recursive_update' not in repo_config:
             repo_config['recursive_update'] = False
